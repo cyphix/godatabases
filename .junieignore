@@ -1,0 +1,7 @@
+# Project Specific
+## Directories
+
+# Security Concerns
+.env
+**/.env
+*.env
