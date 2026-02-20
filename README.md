@@ -13,7 +13,7 @@
 ## Installation
 
 ```bash
-go get github.com/cyphix/databases
+go get gitea.cyphix.dev/kade/go.databases
 ```
 
 ## Quick Start
@@ -22,7 +22,7 @@ go get github.com/cyphix/databases
 
 ```go
 import (
-    "github.com/cyphix/databases/sql"
+    "gitea.cyphix.dev/kade/go.databases/sql"
 )
 
 db, err := sql.NewDatabase().
@@ -43,7 +43,7 @@ conn, err := db.GetConnection()
 
 ```go
 import (
-    "github.com/cyphix/databases/redis"
+    "gitea.cyphix.dev/kade/go.databases/redis"
 )
 
 db, err := redis.NewRedisDatabase("localhost", "6379", "", 0, true)

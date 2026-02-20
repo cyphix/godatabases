@@ -1,8 +1,9 @@
 package examples
 
 import (
-	"github.com/cyphix/databases/sql"
 	"time"
+
+	"gitea.cyphix.dev/kade/go.databases/sql"
 )
 
 func main() {

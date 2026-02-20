@@ -1,7 +1,7 @@
 package examples
 
 import (
-	"github.com/cyphix/databases/redis"
+	"gitea.cyphix.dev/kade/go.databases/redis"
 )
 
 func main() {
