@@ -10,7 +10,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"gitea.cyphix.dev/kade/go.logg"
+	logg "gitea.cyphix.dev/kade/go.logg"
 )
 
 type Database struct {

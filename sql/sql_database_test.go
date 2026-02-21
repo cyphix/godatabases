@@ -77,7 +77,7 @@ func TestDatabase_Open_Errors(t *testing.T) {
 }
 
 func TestDatabase_Open_SQLite(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "finacialfalcon-test-*")
+	tmpDir, err := os.MkdirTemp("", "sql-database-test-*")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 

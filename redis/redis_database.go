@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 
-	"gitea.cyphix.dev/kade/go.logg"
+	logg "gitea.cyphix.dev/kade/go.logg"
 )
 
 type Database struct {
