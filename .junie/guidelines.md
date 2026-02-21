@@ -22,7 +22,7 @@ The project uses several key libraries:
 - **SQL ORM**: `gorm.io/gorm`
 - **SQL Drivers**: `gorm.io/driver/postgres`, `gorm.io/driver/sqlite`
 - **Redis Client**: `github.com/redis/go-redis/v9`
-- **Logging**: `github.com/rs/zerolog` and `github.com/cyphix/logg` (internal wrapper)
+- **Logging**: `github.com/rs/zerolog` and `gitea.cyphix.dev/kade/go.logg` (internal wrapper)
 
 ---
 
