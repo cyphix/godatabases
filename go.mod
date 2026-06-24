@@ -3,7 +3,7 @@ module github.com/cyphix/godatabases
 go 1.26.0
 
 require (
-	gitea.cyphix.dev/kade/go.logg v0.1.4
+	github.com/cyphix/gologg v0.2.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/alicebob/miniredis/v2 v2.36.1
 	github.com/redis/go-redis/v9 v9.18.0
