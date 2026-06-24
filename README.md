@@ -1,4 +1,4 @@
-# go.databases
+# godatabases
 
 `go.databases` is a Go package for managing database connections and stores, supporting SQL (via GORM) and Redis. It is designed to be a lightweight wrapper that provides consistent logging and easy initialization for Go backends.
 

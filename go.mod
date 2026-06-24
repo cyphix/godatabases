@@ -1,4 +1,4 @@
-module gitea.cyphix.dev/kade/go.databases
+module github.com/cyphix/godatabases
 
 go 1.26.0
 
