@@ -8,6 +8,7 @@
 - **Redis Integration**: Easy initialization for Redis clients.
 - **Redis Store**: A session store implementation for Redis.
 - **Consistent Logging**: Integrated with `zerolog` and `logg` for structured logging.
+- **Postgres JSONB Types**: `sql/types.JSONB` and `JSONBOf[T]` for GORM jsonb columns.
 - **Modern Go**: Built with Go 1.26 idioms.
 
 ## Installation
@@ -67,6 +68,31 @@ if err != nil {
 // Use store for session management
 err = store.Commit("my-token", []byte("session-data"), time.Now().Add(time.Hour))
 ```
+
+### Postgres JSONB columns
+
+Use `sql/types` for jsonb fields instead of ad hoc `json.RawMessage` wiring:
+
+```go
+import (
+    "github.com/cyphix/godatabases/sql/types"
+)
+
+type EntityRecord struct {
+    ID   int64       `gorm:"primaryKey"`
+    Data types.JSONB `gorm:"type:jsonb;not null;default:'{}'"`
+}
+
+type Settings struct {
+    Theme string `json:"theme"`
+}
+
+type UserPrefs struct {
+    Prefs types.JSONBOf[Settings] `gorm:"type:jsonb;not null;default:'{}'"`
+}
+```
+
+Prefer `types.JSONB` for unstructured payloads (GraphQL `JSON` scalar) and `types.JSONBOf[T]` when the column shape is stable.
 
 ## License
 
