@@ -3,6 +3,13 @@
 ### Files
 coverage.out
 
+# Logs
+*.log
+.cursor/debug*.log
+
+# pnpm store
+.pnpm-store/
+
 
 
 # IDE Ignores
