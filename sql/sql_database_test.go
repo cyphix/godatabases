@@ -1,12 +1,14 @@
 package sql
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	logg "github.com/cyphix/gologg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/postgres"
@@ -91,6 +93,24 @@ func TestDatabase_Open_SQLite(t *testing.T) {
 
 	err = db.Close()
 	assert.NoError(t, err)
+}
+
+func TestDatabase_LoggerSuppression(t *testing.T) {
+	var buf bytes.Buffer
+	logg.InitWithWriters("debug", &buf)
+	defer logg.Init("info")
+
+	tmpDir := t.TempDir()
+
+	quiet, err := NewDatabase().DatabaseType(SQLite, false).DSN(filepath.Join(tmpDir, "quiet.db")).Open()
+	require.NoError(t, err)
+	require.NoError(t, quiet.Close())
+	assert.Empty(t, buf.String())
+
+	loud, err := NewDatabase().DatabaseType(SQLite, true).DSN(filepath.Join(tmpDir, "loud.db")).Open()
+	require.NoError(t, err)
+	require.NoError(t, loud.Close())
+	assert.NotEmpty(t, buf.String())
 }
 
 func TestDatabase_GetConnection_Errors(t *testing.T) {

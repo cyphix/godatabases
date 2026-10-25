@@ -41,9 +41,9 @@ func NewRedisDatabase(
 	// Create a sub-zlog
 	redisDb.logger = logg.Ctx("databases", "redis")
 	if useLogger {
-		redisDb.logger.Level(zerolog.GlobalLevel())
+		redisDb.logger = redisDb.logger.Level(zerolog.GlobalLevel())
 	} else {
-		redisDb.logger.Level(zerolog.Disabled)
+		redisDb.logger = redisDb.logger.Level(zerolog.Disabled)
 	}
 
 	// Check the connection to make sure that it works

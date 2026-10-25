@@ -1,9 +1,11 @@
 package redis
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
+	logg "github.com/cyphix/gologg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,6 +35,24 @@ func TestNewRedisDatabase(t *testing.T) {
 	// Actually, we can't easily test the default host/port branch without a running redis on 6379.
 	// But we can check that it doesn't panic if we pass empty strings.
 	_, _ = NewRedisDatabase("", "", "", 0, false)
+}
+
+func TestNewRedisDatabase_LoggerSuppression(t *testing.T) {
+	var buf bytes.Buffer
+	logg.InitWithWriters("debug", &buf)
+	defer logg.Init("info")
+
+	s := miniredis.RunT(t)
+
+	quiet, err := NewRedisDatabase(s.Host(), s.Port(), "", 0, false)
+	require.NoError(t, err)
+	require.NoError(t, quiet.Close())
+	assert.Empty(t, buf.String())
+
+	loud, err := NewRedisDatabase(s.Host(), s.Port(), "", 0, true)
+	require.NoError(t, err)
+	require.NoError(t, loud.Close())
+	assert.NotEmpty(t, buf.String())
 }
 
 func TestNewRedisDatabase_Fail(t *testing.T) {
