@@ -33,7 +33,7 @@ func NewDatabase() *Database {
 	}
 
 	db.logger = logg.Ctx("databases", "sql").With().Str("db_type", db.DbType.String()).Logger()
-	db.logger.Level(zerolog.Disabled)
+	db.logger = db.logger.Level(zerolog.Disabled)
 
 	return db
 }
@@ -50,9 +50,9 @@ func (db *Database) DatabaseType(dbType DbType, useLogger bool) *Database {
 
 	db.logger = logg.Ctx("databases", "sql").With().Str("db_type", dbType.String()).Logger()
 	if useLogger {
-		db.logger.Level(zerolog.GlobalLevel())
+		db.logger = db.logger.Level(zerolog.GlobalLevel())
 	} else {
-		db.logger.Level(zerolog.Disabled)
+		db.logger = db.logger.Level(zerolog.Disabled)
 	}
 
 	return db
