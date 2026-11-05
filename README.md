@@ -4,7 +4,7 @@
 
 ## Features
 
-- **SQL Database Management**: Supports SQLite and PostgreSQL via GORM with a builder pattern.
+- **SQL Database Management**: PostgreSQL and SQLite via GORM with a builder pattern. Each backend lives in its own subpackage (`sql/postgres`, `sql/sqlite`), so programs only link the drivers they import.
 - **Redis Integration**: Easy initialization for Redis clients.
 - **Redis Store**: A session store implementation for Redis.
 - **Consistent Logging**: Integrated with `zerolog` and `logg` for structured logging.
@@ -24,10 +24,11 @@ go get github.com/cyphix/godatabases
 ```go
 import (
     "github.com/cyphix/godatabases/sql"
+    "github.com/cyphix/godatabases/sql/postgres"
 )
 
 db, err := sql.NewDatabase().
-    DatabaseType(sql.Postgres, true).
+    UseDriver(postgres.Driver, true).
     DSN("host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable").
     Open()
 
@@ -38,6 +39,20 @@ defer db.Close()
 
 conn, err := db.GetConnection()
 // Use conn (*gorm.DB) for your queries
+```
+
+### SQL Database (SQLite)
+
+```go
+import (
+    "github.com/cyphix/godatabases/sql"
+    "github.com/cyphix/godatabases/sql/sqlite"
+)
+
+db, err := sql.NewDatabase().
+    UseDriver(sqlite.Driver, true).
+    DSN("app.db").
+    Open()
 ```
 
 ### Redis Database
