@@ -26,6 +26,7 @@ migration code are **neither required nor permitted**.
 
 ## Database support
 
-SQLite remains a supported backend in this library alongside PostgreSQL and
-MariaDB (`sql/dbtype.go`, `sql/sql_database.go`). Applications may choose not
-to select it, but do not remove or deprecate it here.
+SQLite remains a supported backend in this library alongside PostgreSQL. Each
+backend lives in its own subpackage (`sql/postgres`, `sql/sqlite`) so
+applications link only the drivers they import. Applications may choose not to
+use SQLite, but do not remove or deprecate it here.

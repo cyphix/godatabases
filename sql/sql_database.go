@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	logg "github.com/cyphix/gologg"
@@ -15,7 +13,7 @@ import (
 
 type Database struct {
 	client          *gorm.DB
-	DbType          DbType        `json:"db_type" omitzero:"true"`
+	Driver          Driver        `json:"-"`
 	Dsn             string        `json:"dsn" omitzero:"true"`
 	MaxIdle         int           `json:"max_idle" omitzero:"true"`
 	MaxOpen         int           `json:"max_open" omitzero:"true"`
@@ -26,14 +24,12 @@ type Database struct {
 
 func NewDatabase() *Database {
 	db := &Database{
-		DbType:          Undefined,
 		MaxIdle:         10,
 		MaxOpen:         100,
 		ConnMaxLifetime: time.Hour,
 	}
 
-	db.logger = logg.Ctx("databases", "sql").With().Str("db_type", db.DbType.String()).Logger()
-	db.logger = db.logger.Level(zerolog.Disabled)
+	db.logger = logg.Ctx("databases", "sql").Level(zerolog.Disabled)
 
 	return db
 }
@@ -45,10 +41,13 @@ func (db *Database) MaxLifetime(duration time.Duration) *Database {
 	return db
 }
 
-func (db *Database) DatabaseType(dbType DbType, useLogger bool) *Database {
-	db.DbType = dbType
+// UseDriver selects the backend, e.g. postgres.Driver from
+// github.com/cyphix/godatabases/sql/postgres or sqlite.Driver from
+// github.com/cyphix/godatabases/sql/sqlite.
+func (db *Database) UseDriver(driver Driver, useLogger bool) *Database {
+	db.Driver = driver
 
-	db.logger = logg.Ctx("databases", "sql").With().Str("db_type", dbType.String()).Logger()
+	db.logger = logg.Ctx("databases", "sql").With().Str("driver", driver.Name).Logger()
 	if useLogger {
 		db.logger = db.logger.Level(zerolog.GlobalLevel())
 	} else {
@@ -58,13 +57,7 @@ func (db *Database) DatabaseType(dbType DbType, useLogger bool) *Database {
 	return db
 }
 
-// DSN
-//
-// Different dsn supported database types:
-//
-//	sqlite: "filename.db"
-//	postgres: "host=localhost user=username password=passwd dbname=dbname port=9920 sslmode=disable TimeZone=America/Los_Angeles"
-//	mariadb: "username:passwd@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
+// DSN sets the connection string; its format is defined by the driver.
 func (db *Database) DSN(dsn string) *Database {
 	db.Dsn = dsn
 	return db
@@ -147,12 +140,12 @@ func (db *Database) GetConnection() (*gorm.DB, error) {
 }
 
 func (db *Database) Open() (*Database, error) {
-	if db.DbType == Undefined {
+	if db.Driver.Dialector == nil {
 		db.logger.Error().
 			Str(logg.KeyEvent, "open").
 			Str(logg.KeyResult, "fail").
-			Msg("database type not set")
-		return nil, errors.New("database type is not set")
+			Msg("database driver not set")
+		return nil, errors.New("database driver is not set")
 	}
 	if db.Dsn == "" {
 		db.logger.Error().
@@ -162,23 +155,7 @@ func (db *Database) Open() (*Database, error) {
 		return nil, errors.New("database DSN is not set")
 	}
 
-	var dialector gorm.Dialector
-	switch db.DbType {
-	case SQLite:
-		dialector = sqlite.Open(db.Dsn)
-	case Postgres:
-		dialector = postgres.Open(db.Dsn)
-	case MariaDb:
-		return nil, errors.New("mariadb not implemented")
-	default:
-		db.logger.Error().
-			Str(logg.KeyEvent, "open").
-			Str(logg.KeyResult, "fail").
-			Msgf("unsupported database type: %s", db.DbType)
-		return nil, fmt.Errorf("unsupported database type: %s", db.DbType)
-	}
-
-	sqlDB, err := gorm.Open(dialector, &gorm.Config{})
+	sqlDB, err := gorm.Open(db.Driver.Dialector(db.Dsn), &gorm.Config{})
 	if err != nil {
 		db.logger.Error().Err(err).
 			Str(logg.KeyEvent, "open").

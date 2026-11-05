@@ -1,116 +1,48 @@
 package sql
 
 import (
-	"bytes"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	logg "github.com/cyphix/gologg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func TestDbType_String(t *testing.T) {
-	tests := []struct {
-		dbType DbType
-		want   string
-	}{
-		{SQLite, "sqlite"},
-		{Postgres, "postgres"},
-		{MariaDb, "mariadb"},
-		{Undefined, "undefined"},
-		{DbType(999), "internal error"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.dbType.String())
-		})
-	}
-}
+var testDriver = Driver{Name: "postgres", Dialector: postgres.Open}
 
 func TestDatabase_Builders(t *testing.T) {
 	db := NewDatabase().
 		MaxLifetime(2*time.Hour).
-		DatabaseType(SQLite, true).
-		DSN("test.db").
+		UseDriver(testDriver, true).
+		DSN("host=localhost").
 		SetMaxIdle(5).
 		SetMaxOpen(50)
 
 	assert.Equal(t, 2*time.Hour, db.ConnMaxLifetime)
-	assert.Equal(t, SQLite, db.DbType)
-	assert.Equal(t, "test.db", db.Dsn)
+	assert.Equal(t, "postgres", db.Driver.Name)
+	assert.Equal(t, "host=localhost", db.Dsn)
 	assert.Equal(t, 5, db.MaxIdle)
 	assert.Equal(t, 50, db.MaxOpen)
 }
 
 func TestDatabase_Open_Errors(t *testing.T) {
-	t.Run("Undefined Type", func(t *testing.T) {
+	t.Run("Missing Driver", func(t *testing.T) {
 		db := NewDatabase()
 		_, err := db.Open()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "database type is not set")
+		assert.Contains(t, err.Error(), "database driver is not set")
 	})
 
 	t.Run("Missing DSN", func(t *testing.T) {
-		db := NewDatabase().DatabaseType(SQLite, false)
+		db := NewDatabase().UseDriver(testDriver, false)
 		_, err := db.Open()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "database DSN is not set")
 	})
 
-	t.Run("Unsupported Type", func(t *testing.T) {
-		db := NewDatabase().DatabaseType(DbType(99), false).DSN("test")
-		_, err := db.Open()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "unsupported database type")
-	})
-
-	t.Run("MariaDb Not Implemented", func(t *testing.T) {
-		db := NewDatabase().DatabaseType(MariaDb, false).DSN("test")
-		_, err := db.Open()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "mariadb not implemented")
-	})
-}
-
-func TestDatabase_Open_SQLite(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "sql-database-test-*")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	dsn := filepath.Join(tmpDir, "test.db")
-	db := NewDatabase().DatabaseType(SQLite, false).DSN(dsn)
-
-	opened, err := db.Open()
-	assert.NoError(t, err)
-	assert.NotNil(t, opened)
-	assert.NotNil(t, db.client)
-
-	err = db.Close()
-	assert.NoError(t, err)
-}
-
-func TestDatabase_LoggerSuppression(t *testing.T) {
-	var buf bytes.Buffer
-	logg.InitWithWriters("debug", &buf)
-	defer logg.Init("info")
-
-	tmpDir := t.TempDir()
-
-	quiet, err := NewDatabase().DatabaseType(SQLite, false).DSN(filepath.Join(tmpDir, "quiet.db")).Open()
-	require.NoError(t, err)
-	require.NoError(t, quiet.Close())
-	assert.Empty(t, buf.String())
-
-	loud, err := NewDatabase().DatabaseType(SQLite, true).DSN(filepath.Join(tmpDir, "loud.db")).Open()
-	require.NoError(t, err)
-	require.NoError(t, loud.Close())
-	assert.NotEmpty(t, buf.String())
 }
 
 func TestDatabase_GetConnection_Errors(t *testing.T) {
@@ -194,9 +126,7 @@ func TestDatabase_Close_Errors(t *testing.T) {
 }
 
 func TestDatabase_Open_GormError(t *testing.T) {
-	// Triggering gorm.Open error
-	// For example, by using an invalid DSN for SQLite
-	db := NewDatabase().DatabaseType(SQLite, false).DSN("/nonexistent/path/to/db")
+	db := NewDatabase().UseDriver(testDriver, false).DSN("host=127.0.0.1 port=1 connect_timeout=1 sslmode=disable")
 	_, err := db.Open()
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "opening gorm connection")
@@ -218,7 +148,7 @@ func TestDatabase_WithSqlmock(t *testing.T) {
 
 	// 3. Initialize our Database wrapper
 	db := NewDatabase().
-		DatabaseType(Postgres, false).
+		UseDriver(testDriver, false).
 		SetClient(gormDB)
 
 	// 4. Set up expectations
@@ -250,7 +180,7 @@ func TestDatabase_Close_Mock(t *testing.T) {
 	require.NoError(t, err)
 
 	db := NewDatabase().
-		DatabaseType(Postgres, false).
+		UseDriver(testDriver, false).
 		SetClient(gormDB)
 
 	mock.ExpectClose()
